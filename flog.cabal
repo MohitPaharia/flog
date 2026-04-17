@@ -25,7 +25,28 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      API.API
+      API.Auth
+      API.OpenAPI
+      API.Post
+      API.User
+      App
+      Database.Connection
+      Database.Migration
+      Database.Queries.Post
+      Database.Queries.TempUser
+      Database.Queries.User
+      Database.Schema
+      Handler.Auth
+      Handler.Post
+      Handler.User
+      Mail
+      Server
+      Type.Auth
+      Type.General
+      Type.Helper
+      Type.Post
+      Type.User
   other-modules:
       Paths_flog
   autogen-modules:
@@ -34,7 +55,35 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
+    , bcrypt
+    , bytestring
+    , cache
+    , directory
+    , email-validate
+    , filepath
+    , hashable
+    , http-api-data
+    , http-types
+    , jose
+    , monad-logger
+    , mtl
+    , openapi3
+    , persistent
+    , persistent-postgresql
+    , persistent-template
+    , random
+    , resource-pool
+    , servant
+    , servant-auth
+    , servant-auth-server
+    , servant-openapi3
+    , servant-server
+    , text
+    , time
+    , wai
+    , warp
   default-language: Haskell2010
 
 executable flog-exe
@@ -49,6 +98,8 @@ executable flog-exe
   build-depends:
       base >=4.7 && <5
     , flog
+    , wai
+    , warp
   default-language: Haskell2010
 
 test-suite flog-test
@@ -64,4 +115,7 @@ test-suite flog-test
   build-depends:
       base >=4.7 && <5
     , flog
+    , sandwich
+    , wai
+    , warp
   default-language: Haskell2010

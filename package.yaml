@@ -21,6 +21,8 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- wai
+- warp
 
 ghc-options:
 - -Wall
@@ -35,6 +37,33 @@ ghc-options:
 
 library:
   source-dirs: src
+  dependencies:
+  - servant
+  - servant-server
+  - servant-auth
+  - servant-auth-server
+  - servant-openapi3
+  - persistent
+  - persistent-template
+  - persistent-postgresql
+  - resource-pool
+  - http-types
+  - http-api-data
+  - openapi3
+  - aeson
+  - text
+  - bytestring
+  - mtl
+  - monad-logger
+  - filepath
+  - directory
+  - time
+  - jose
+  - bcrypt
+  - cache
+  - email-validate
+  - random
+  - hashable
 
 executables:
   flog-exe:
@@ -57,3 +86,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - flog
+    - sandwich
