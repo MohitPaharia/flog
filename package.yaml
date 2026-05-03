@@ -42,16 +42,20 @@ library:
   - servant-server
   - servant-auth
   - servant-auth-server
-  - servant-openapi3
+  - servant-client
+  - servant-auth-client
   - persistent
   - persistent-template
   - persistent-postgresql
+  - esqueleto
   - resource-pool
   - http-types
   - http-api-data
-  - openapi3
+  - http-client
+  - http-client-tls
   - aeson
   - text
+  - extra
   - bytestring
   - mtl
   - monad-logger
@@ -64,11 +68,26 @@ library:
   - email-validate
   - random
   - hashable
+  - brick
+  - vty
+  - containers
+  - vty-crossplatform
+  - microlens-platform
 
 executables:
-  flog-exe:
+  flog-server:
     main:                Main.hs
-    source-dirs:         app
+    source-dirs:         app/backend
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - flog
+
+  flog-tui:
+    main:                Main.hs
+    source-dirs:         app/frontend/tui
     ghc-options:
     - -threaded
     - -rtsopts

@@ -1,31 +1,32 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators     #-}
 
 module API.User where
 
-import Servant as S
+import           Data.Int  (Int64)
+import           Servant   as S
 
-import API.Auth (Protected)
-import Type.Auth
-import Type.User
-import Database.Schema as DB
+import           API.Auth  (Protected)
+import           Type.Auth
+import           Type.User
 
--- POST Create /users
-type UserAPI = "users" :> ReqBody '[JSON] CreateUser :> S.Post '[JSON] TokenResponse
-      -- GET Show /self
-    :<|> Protected :> "self" :> Get '[JSON] UserResponse
+type UserAPI
+    -- POST Create /users
+       = "users" :> ReqBody '[JSON] CreateUser :> S.Post '[JSON] TokenResponse
+    -- GET Show /self
+    :<|> Protected :> "self" :> Get '[JSON] SelfResponse
 
     -- GET Index /users
     :<|> Protected :> "users" :> Get '[JSON] [UserResponse]
 
     -- GET Show /users/{id}
-    :<|> Protected :> "users" :> Capture "id" (Key User) :> Get '[JSON] UserResponse
+    :<|> Protected :> "users" :> Capture "id" Int64 :> Get '[JSON] UserResponse
 
     -- Patch update /users/
     :<|> Protected :> "users" :> ReqBody '[JSON] UpdateUser :> Patch '[JSON] UserResponse
 
-    -- DELETE destroy /users/    
+    -- DELETE destroy /users/
     :<|> Protected :> "users" :> Delete '[JSON] NoContent
-  
+
 

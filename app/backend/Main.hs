@@ -2,11 +2,12 @@
 
 module Main (main) where
 
-import Network.Wai.Handler.Warp
+import           Network.Wai.Handler.Warp
 
-import Database.Migration (runMigrations)
-import App (defaultEnvironment, databaseConnectionPool)
-import Server (app)
+import           App                      (databaseConnectionPool,
+                                           defaultEnvironment)
+import           Database.Migration       (runMigrations)
+import           Server                   (app)
 
 main :: IO ()
 main = do
@@ -17,6 +18,6 @@ main = do
         setPort 3000 $
         setHost "!6"  $
         defaultSettings
-  
+
   putStrLn "Server is running at port: 3000"
   runSettings settings (app env)

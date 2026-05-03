@@ -2,34 +2,41 @@
 
 module Handler.User (userHandler) where
 
-import Servant
-import Servant.Auth.Server
-import Database.Persist
-import qualified Data.ByteString as BL
-import Data.Text.Encoding (decodeUtf8)
-import Control.Monad.IO.Class (MonadIO(liftIO))
-import Control.Monad.Reader (asks)
-import Data.Time (addUTCTime, getCurrentTime)
+import           Control.Monad.IO.Class          (MonadIO (liftIO))
+import           Control.Monad.Reader            (asks)
+import qualified Data.ByteString                 as BL
+import           Data.Int                        (Int64)
+import           Data.Text.Encoding              (decodeUtf8)
+import           Data.Time                       (addUTCTime, getCurrentTime)
+import           Database.Esqueleto.Experimental (toSqlKey)
+import           Database.Persist
+import           Servant
+import           Servant.Auth.Server
 
-import App (AppM, runDB, jwtSettings, requireAuth)
-import API.User (UserAPI)
-import Type.Helper
-import Type.Auth (TokenResponse (..), AuthUser(..)) 
-import Type.User (CreateUser(..), UserResponse (..), UpdateUser)
-import Database.Queries.User (insertUser, fetchAllUsers, fetchUser, updateUser, deleteUser)
-import Database.Schema (User)
+import           API.User                        (UserAPI)
+import           App                             (AppM, jwtSettings,
+                                                  requireAuth, runDB)
+import           Database.Queries.Post           (postCountOfUser)
+import           Database.Queries.User           (deleteUser, fetchAllUsers,
+                                                  fetchUser, insertUser,
+                                                  updateUser)
+import           Type.Auth                       (AuthUser (..),
+                                                  TokenResponse (..))
+import           Type.Helper
+import           Type.User                       (CreateUser (..), SelfResponse,
+                                                  UpdateUser, UserResponse (..))
 
 userHandler :: ServerT UserAPI AppM
-userHandler = createUserH 
+userHandler = createUserH
   :<|> getSelfH
-  :<|> getAllUsersH 
+  :<|> getAllUsersH
   :<|> getUserH
   :<|> updateUserH
   :<|> deleteUserH
-  
+
 createUserH ::  CreateUser -> AppM TokenResponse
 createUserH usr@( CreateUser {email = e}) = do
-  jwtSettings' <- asks jwtSettings 
+  jwtSettings' <- asks jwtSettings
   pKey <- maybe (throwError err409) pure =<< runDB (insertUser usr)
 
   let authUser = AuthUser {userId = pKey, email = e}
@@ -50,22 +57,25 @@ getAllUsersH auth = do
   users <- runDB (fetchAllUsers)
   pure $ map toUserResponse users
 
-getUserH :: AuthResult AuthUser -> Key User -> AppM UserResponse
-getUserH auth key = do
+getUserH :: AuthResult AuthUser -> Int64 -> AppM UserResponse
+getUserH auth userId = do
   _ <- requireAuth auth
-  mUser <- runDB (fetchUser key)
+  let key  = toSqlKey userId
+
+  mUser <- runDB $ fetchUser key
   user  <- maybe (throwError err404) pure mUser
 
   pure $ toUserResponse (Entity key user)
 
-getSelfH :: AuthResult AuthUser -> AppM UserResponse
+getSelfH :: AuthResult AuthUser -> AppM SelfResponse
 getSelfH auth = do
   AuthUser {userId = uid} <- requireAuth auth
 
   mUser <- runDB (fetchUser uid)
   user  <- maybe (throwError err404) pure mUser
+  postCount <- runDB (postCountOfUser uid)
 
-  pure $ toUserResponse (Entity uid  user)
+  pure $ toSelfResponse (Entity uid  user) postCount
 
 updateUserH :: AuthResult AuthUser -> UpdateUser -> AppM UserResponse
 updateUserH auth newData = do
@@ -78,5 +88,5 @@ updateUserH auth newData = do
 deleteUserH :: AuthResult AuthUser -> AppM NoContent
 deleteUserH auth = do
   AuthUser {userId = uid} <- requireAuth auth
-  runDB (deleteUser uid) 
+  runDB (deleteUser uid)
   return NoContent

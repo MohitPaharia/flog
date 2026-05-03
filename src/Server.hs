@@ -1,18 +1,19 @@
+{-# LANGUAGE DataKinds     #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE DataKinds #-}
 
 module Server(app) where
 
-import Control.Monad.Reader
+import           Control.Monad.Reader
 
-import Servant
-import Servant.Auth.Server (JWTSettings, CookieSettings, defaultCookieSettings)
+import           Servant
+import           Servant.Auth.Server  (CookieSettings, JWTSettings,
+                                       defaultCookieSettings)
 
-import App
-import API.API (API, apiProxy)
-import Handler.Auth (authHandler)
-import Handler.User (userHandler)
-import Handler.Post (postHandler)
+import           API.API              (API, apiProxy)
+import           App
+import           Handler.Auth         (authHandler)
+import           Handler.Post         (postHandler)
+import           Handler.User         (userHandler)
 
 server :: ServerT API AppM
 server = authHandler

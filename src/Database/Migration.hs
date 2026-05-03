@@ -1,8 +1,8 @@
 module Database.Migration(runMigrations) where
 
-import Database.Persist.Postgresql
-import Control.Monad.Logger (runStdoutLoggingT)
-import Database.Schema
+import           Control.Monad.Logger        (runStdoutLoggingT)
+import           Database.Persist.Postgresql
+import           Database.Schema
 
 runMigrations :: ConnectionPool -> IO ()
 runMigrations pool =

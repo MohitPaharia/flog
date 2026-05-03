@@ -2,8 +2,8 @@
 
 module Database.Connection (createPool) where
 
-import Database.Persist.Postgresql
-import Control.Monad.Logger (runStdoutLoggingT)
+import           Control.Monad.Logger        (runStdoutLoggingT)
+import           Database.Persist.Postgresql
 
 createPool :: ConnectionString -> Int -> IO ConnectionPool
 createPool connStr connCount =

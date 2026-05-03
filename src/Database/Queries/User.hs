@@ -1,14 +1,14 @@
 module Database.Queries.User where
 
-import Data.Time (Day, getCurrentTime)
-import Control.Monad.IO.Class (MonadIO, liftIO)
-import Database.Persist
-import Database.Persist.Postgresql
-import Data.Text (Text)
+import           Control.Monad.IO.Class      (MonadIO, liftIO)
+import           Data.Text                   (Text)
+import           Data.Time                   (Day, getCurrentTime)
+import           Database.Persist
+import           Database.Persist.Postgresql
 
-import Type.User
-import Database.Schema
-import Type.General (Email)
+import           Database.Schema
+import           Type.General                (Email)
+import           Type.User
 
 insertUser :: MonadIO m => CreateUser -> SqlPersistT m (Maybe (Key User))
 insertUser (CreateUser name password email dob) = do
@@ -18,7 +18,7 @@ insertUser (CreateUser name password email dob) = do
     , userPassword   = password
     , userEmail      = email
     , userDob        = dob
-    , userCreated_at = now 
+    , userCreated_at = now
     }
 
 -- searchUser :: MonadIO m => String -> SqlPersistT m (Maybe User)
@@ -36,7 +36,7 @@ updateUser uid (UpdateUser newName newDob) = updateGet uid $
   maybe [] (\dob -> [UserDob  =. newDob]) newDob
 
 deleteUser :: MonadIO m => Key User -> SqlPersistT m ()
-deleteUser = delete 
+deleteUser = delete
 
 checkUserExistsByEmail :: MonadIO m => Email -> SqlPersistT m Bool
 checkUserExistsByEmail email =
@@ -51,4 +51,4 @@ getUserByEmailAndPassword email password =
   selectFirst
     [ UserEmail ==. email
     , UserPassword ==. password
-    ] []  
+    ] []

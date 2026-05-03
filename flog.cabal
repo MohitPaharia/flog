@@ -27,10 +27,18 @@ library
   exposed-modules:
       API.API
       API.Auth
-      API.OpenAPI
       API.Post
       API.User
       App
+      Client.Request
+      Client.Tui
+      Client.Tui.Command
+      Client.Tui.FileSystem
+      Client.Tui.Helper
+      Client.Tui.Kaomoji
+      Client.Tui.Logger
+      Client.Tui.Type
+      Client.Tui.Util
       Database.Connection
       Database.Migration
       Database.Queries.Post
@@ -58,18 +66,24 @@ library
       aeson
     , base >=4.7 && <5
     , bcrypt
+    , brick
     , bytestring
     , cache
+    , containers
     , directory
     , email-validate
+    , esqueleto
+    , extra
     , filepath
     , hashable
     , http-api-data
+    , http-client
+    , http-client-tls
     , http-types
     , jose
+    , microlens-platform
     , monad-logger
     , mtl
-    , openapi3
     , persistent
     , persistent-postgresql
     , persistent-template
@@ -77,23 +91,42 @@ library
     , resource-pool
     , servant
     , servant-auth
+    , servant-auth-client
     , servant-auth-server
-    , servant-openapi3
+    , servant-client
     , servant-server
     , text
     , time
+    , vty
+    , vty-crossplatform
     , wai
     , warp
   default-language: Haskell2010
 
-executable flog-exe
+executable flog-server
   main-is: Main.hs
   other-modules:
       Paths_flog
   autogen-modules:
       Paths_flog
   hs-source-dirs:
-      app
+      app/backend
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , flog
+    , wai
+    , warp
+  default-language: Haskell2010
+
+executable flog-tui
+  main-is: Main.hs
+  other-modules:
+      Paths_flog
+  autogen-modules:
+      Paths_flog
+  hs-source-dirs:
+      app/frontend/tui
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5

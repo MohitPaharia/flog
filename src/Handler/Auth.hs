@@ -1,40 +1,42 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings     #-}
 
 module Handler.Auth(authHandler) where
 
-import Control.Monad (when, replicateM)
-import Control.Monad.Reader (MonadIO (liftIO))
-import Control.Monad.Reader.Class (asks)
-import qualified Data.ByteString as BL
-import Data.Cache as Cache
-import Data.Maybe (isJust, isNothing)
-import qualified Data.Text as T
-import Data.Text.Encoding (decodeUtf8)
-import Data.Time (addUTCTime, getCurrentTime)
-import Database.Persist
-import Servant
-import Servant.Auth.Server
-import System.Random (randomRIO)
+import           Control.Monad              (replicateM, when)
+import           Control.Monad.Reader       (MonadIO (liftIO))
+import           Control.Monad.Reader.Class (asks)
+import qualified Data.ByteString            as BL
+import           Data.Maybe                 (isJust, isNothing)
+import qualified Data.Text                  as T
+import           Data.Text.Encoding         (decodeUtf8)
+import           Data.Time                  (addUTCTime, getCurrentTime)
+import           Database.Persist
+import           Servant
+import           Servant.Auth.Server
+import           System.Random              (randomRIO)
 
-import API.Auth (AuthAPI)
-import App
-import Database.Schema
-import Database.Queries.TempUser (insertTempUser, deleteTempUserByEmail, getTempUserByEmail, deleteTempUser)
-import Database.Queries.User
-import Mail
-import Type.Auth
-import Type.General (Email)
-import Type.User (CreateUser(..))
+import           API.Auth                   (AuthAPI)
+import           App
+import           Database.Queries.TempUser  (deleteTempUser,
+                                             deleteTempUserByEmail,
+                                             getTempUserByEmail, insertTempUser)
+import           Database.Queries.User
+import           Database.Schema
+import           Mail
+import           Type.Auth
+import           Type.General               (Email)
+import           Type.User                  (CreateUser (..))
 
 authHandler :: ServerT AuthAPI AppM
 authHandler = loginH
+         :<|> logoutH
          :<|> processRegistrationH
          :<|> verifyTokenH
- 
+
 loginH :: Login -> AppM TokenResponse
 loginH (Login email password) = do
-  jwtSettings' <- asks jwtSettings 
+  jwtSettings' <- asks jwtSettings
   user <- maybe (throwError err404) pure
       =<< runDB (getUserByEmailAndPassword email password)
 
@@ -42,25 +44,40 @@ loginH (Login email password) = do
   let expiry   = addUTCTime 3600 now -- 1 hour from now
   let authUser = toAuthUser user
 
-  eJwt <- liftIO $ makeJWT authUser jwtSettings' (Just expiry) 
+  eJwt <- liftIO $ makeJWT authUser jwtSettings' (Just expiry)
 
   jwt <- case eJwt of
-    Left _ -> throwError err500
+    Left _  -> throwError err500
     Right t -> pure t
 
   pure $ TokenResponse $ decodeUtf8 $ BL.toStrict jwt
+
+logoutH :: AuthResult AuthUser -> AppM NoContent
+logoutH auth = do
+  authUser <- requireAuth auth
+  jwtSettings' <- asks jwtSettings
+
+  now <- liftIO getCurrentTime
+  let expiry   = addUTCTime 3600 now -- 1 hour from now
+
+  eJwt <- liftIO $ makeJWT authUser jwtSettings' (Just expiry)
+
+  case eJwt of
+    Left _  -> throwError err500
+    Right _ -> pure NoContent
+
 
 processRegistrationH :: CreateUser -> AppM GenericResponse
 processRegistrationH newUser@(CreateUser name password email dob) = do
   -- Check if email is already in use by a registered user.
   emailAlreadyExists <- runDB $ checkUserExistsByEmail email
-  when emailAlreadyExists $ throwError err409 
-  
+  when emailAlreadyExists $ throwError err409
+
   mOldTempUser <- runDB $ getTempUserByEmail email
   when (isJust mOldTempUser) $ throwError err401
- 
+
   now <- liftIO $ getCurrentTime
-  let expiry_time =  addUTCTime (600) now -- 10 minutes from now 
+  let expiry_time =  addUTCTime (600) now -- 10 minutes from now
   token <- liftIO generateToken
 
   mKey <- runDB $ insertTempUser token expiry_time newUser
@@ -68,20 +85,20 @@ processRegistrationH newUser@(CreateUser name password email dob) = do
 
   success <- liftIO $ sendVerificationMail Mock email token
 
-  if success 
+  if success
     then pure $ GenericResponse { message = "Check your mail." }
     else do
       runDB (deleteTempUserByEmail email)
       throwError err500
 
 generateToken :: IO T.Text
-generateToken = T.pack <$> replicateM 8 (randomRIO ('0', '9')) 
+generateToken = T.pack <$> replicateM 8 (randomRIO ('0', '9'))
 
 verifyTokenH :: Maybe Email -> Maybe T.Text -> AppM GenericResponse
 verifyTokenH mEmail mToken = do
   email <- maybe (throwError err400) pure mEmail
   token <- maybe (throwError err400) pure mToken
-  
+
   mTempUser <- runDB $ getTempUserByEmail email
   (Entity key user)  <- maybe (throwError err401) pure mTempUser
 

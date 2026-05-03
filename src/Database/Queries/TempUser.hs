@@ -1,17 +1,17 @@
 module Database.Queries.TempUser where
 
-import Control.Monad.IO.Class (MonadIO (..))
-import Data.Text (Text)
-import Data.Time (UTCTime)
-import Database.Persist
-import Database.Persist.Postgresql (SqlPersistT)
+import           Control.Monad.IO.Class      (MonadIO (..))
+import           Data.Text                   (Text)
+import           Data.Time                   (UTCTime)
+import           Database.Persist
+import           Database.Persist.Postgresql (SqlPersistT)
 
-import Database.Schema
-import Type.General (Email)
-import Type.User (CreateUser(..))
- 
+import           Database.Schema
+import           Type.General                (Email)
+import           Type.User                   (CreateUser (..))
+
 insertTempUser :: MonadIO m =>  Text -> UTCTime-> CreateUser -> SqlPersistT m (Maybe (Key TempUser))
-insertTempUser token expiryTime(CreateUser name password email dob) = 
+insertTempUser token expiryTime(CreateUser name password email dob) =
   insertUnique $ TempUser
     { tempUserEmail      = email
     , tempUserName       = name
@@ -23,7 +23,7 @@ insertTempUser token expiryTime(CreateUser name password email dob) =
 
 
 getTempUserByEmail :: MonadIO m => Email -> SqlPersistT m (Maybe (Entity TempUser))
-getTempUserByEmail email = 
+getTempUserByEmail email =
   selectFirst [TempUserEmail ==. email] []
 
 deleteTempUserByEmail :: MonadIO m => Email -> SqlPersistT m ()

@@ -1,8 +1,8 @@
 module Mail where
 
-import Data.Text (Text)
+import           Data.Text    (Text)
 
-import Type.General (Email(..))
+import           Type.General (Email (..))
 
 data MailService = SMTP | Mock
 
